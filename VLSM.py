@@ -47,7 +47,7 @@ def initialIP():
         subnetLength = int(input("Ingrese la cantidad de subredes: "))
 
     # Calcular cantidad de hosts por subred
-    # La cantidad de hosts por subred es 2^bits disponibles para robar - 2
+    # La cantidad de hosts por subred es 2^bits disponibles para robar -2
     # La cantidad de bits disponibles para robar se va reduciendo a medida que se asignan hosts a las subredes
     print("\nIngrese la cantidad de hosts por subred")
 
@@ -59,7 +59,7 @@ def initialIP():
         subnet.append(int(input(f"Subred {str(i + 1)}: ")))
 
         # Validar cantidad de hosts
-        # La cantidad de hosts por subred debe ser menor a 2^bits disponibles para robar - 2
+        # La cantidad de hosts por subred debe ser menor a 2^bits disponibles para robar -2
         # -2 porque la primera y última IP de la subred no se pueden usar, ya que son la IP de la subred y la IP de broadcast
         while (subnet[i] < 1 or subnet[i] > 2**(bitsAvailableAux) - 2):
             print("Cantidad de hosts inválida")
@@ -118,36 +118,24 @@ def CalculateSubnet(IP, mask, prefix, subnet, bitsAvailable):
         for j in range(2**(n)):
             # Sumar j al último octeto de la IP multiplicando por el número mágico
             # El número mágico son los saltos que se deben dar para llegar a la siguiente subred
-            IP_copy[lastOctet] = str(int(IP[lastOctet]) + j * magicNumber)
+            IP_copy[lastOctet] = str(int(IP_copy[lastOctet]) + magicNumber if j != 0 else int(IP_copy[lastOctet]))
 
             # Calcular el primer host y el último host de la subred
 
-            # Dependiendo de cuál sea el último octeto de la máscara de red
-            # Se buscará copiar toda la IP
-            # Si el último octeto del que se están robando bits es el penúltimo
-            # Se se le sumará 1 al valor de lastOctet para copiar toda la IP
-            # Si el último octeto es el último, se copiará la IP simplemente
-            firstHost = IP_copy[0:lastOctet + 1] if lastOctet + \
-                1 < 0 else IP_copy[0:lastOctet]
+            firstHost = IP_copy.copy()
 
             # Se le suma 1 al último octeto de la IP
-            firstHost.append(str(int(
-                IP_copy[lastOctet + 1]) + 1 if lastOctet + 1 < 0 else int(IP_copy[lastOctet]) + 1))
+            firstHost[-1] = str(int(firstHost[-1]) + 1)
 
-            # Igual que la del firstHost, se busca copiar toda la IP
-            lastHost = IP_copy[0:lastOctet + 1] if lastOctet + \
-                1 < 0 else IP_copy[0:lastOctet]
+            lastHost = IP_copy.copy()
 
             # Se le resta 1 al último octeto de la IP
-            octecLastHost = int(
-                IP_copy[lastOctet + 1]) - 1 if lastOctet + 1 < 0 else int(IP_copy[lastOctet]) + magicNumber - 2
+            lastHost[-1] = str(int(lastHost[-1]) - 1 if lastOctet + 1 < 0 else int(lastHost[-1]) + magicNumber - 2)
 
-            # Si el último tiene un valor negativo, se le suma 255 para que sea un valor válido
-            lastHost.append(
-                str(octecLastHost + 255 if octecLastHost < 0 else octecLastHost))
+            # Si el último octeto queda con valor negativo, se le suma 255 para que sea un valor válido
+            lastHost[-1] = str(int(lastHost[-1]) + 255 if int(lastHost[-1]) < 0 else lastHost[-1])
 
             # Si el último octeto del que se están robando bits es el penúltimo, se le suma el número mágico y se le resta 1
-            # Para así obtener el último host de la subred
             lastHost[lastOctet] = str(int(
                 lastHost[lastOctet]) + magicNumber - 1 if lastOctet + 1 < 0 else int(lastHost[lastOctet]))
 
@@ -155,7 +143,7 @@ def CalculateSubnet(IP, mask, prefix, subnet, bitsAvailable):
             # Sólo se copia la IP del último host y se le suma 1 al último octeto
             broadcast = lastHost[0:3] + [str(int(lastHost[3]) + 1)]
 
-            # Si algún octeto de la IP es mayor a 255, se le suma 1 al anterior y se le resta 256 al actual
+            # Si algún octeto de las IP's es mayor a 255, se le suma 1 al anterior y se le resta 256 al actual
             for k in range(3, -1, -1):
                 if int(IP_copy[k]) > 255:
                     IP_copy[k - 1] = str(int(IP_copy[k - 1]) + 1)
